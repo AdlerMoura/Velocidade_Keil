@@ -1,6 +1,6 @@
 #include "mbed.h"
 
-DigitalIn sensor(PB_0);
+DigitalIn sensor(PA_5);
 
 double micros(){
     using namespace std::chrono;
@@ -11,37 +11,27 @@ double micros(){
 
 int main(){
     sensor.mode(PullUp);
-    int estado = 1;
-    int k = 0;
-    float tempIni, T, f;
-    int rpm;
+    Timer tmr;
+    float tempoIni, T, f;
+    int k = 0, rpm;
     
     while (true){
         if (k == 0){
-            tempIni = micros();
+            while (sensor.read());
+            tempoIni = micros();
             k = 1;
+        } else{
+            tempoIni = micros();
         }
-        
-        if(estado && !sensor.read()){
-            estado = 0;
-        }
+        while (sensor.read());
+        while (!sensor.read());
+        T = micros() - tempoIni;
 
-        if(!estado && sensor.read()){
-            T = micros() - tempIni;
-            printf("Período %f ms\n", T/1000.0);
-
-            f = 1000000 / T;
-            printf("Frequência: %f Hz\n", f);
-            rpm = int(f * 60);
-            printf("RPM: %d\n", rpm);
-            /*
-            raio = 0.06;
-            float velocidade = f * 2.0 * 3.14 * raio;
-            printf("Velocidade: %f m/s\n: ");
-            */
-
-            k = 0;
-            estado = 1;
-        }
+        printf("Período %f ms\n", T);
+        f = 1000000.0 / T;
+        printf("Frequência: %f Hz\n", f);
+        rpm = int(f * 60);
+        printf("RPM: %d\n", rpm);
+        ThisThread::sleep_for(100ms);
     }
 }
